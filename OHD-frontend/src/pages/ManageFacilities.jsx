@@ -99,7 +99,7 @@ export default function ManageFacilities() {
     const handleManagerChange = (selected) => {
         setEditFacility(prev => ({
             ...prev,
-            head_manager: selected ? selected.value : "", // Set manager as single value
+            headManager: selected ? selected.value : "", // Set manager as single value
         }));
     };
 
@@ -118,8 +118,8 @@ export default function ManageFacilities() {
         let previousFacility = null;
 
         // Check if selected manager is already managing another facility
-        if (editFacility.head_manager) {
-            const existingFacility = facilities.find(f => f.head_manager === editFacility.head_manager && f.facility_id !== editFacility.facility_id);
+        if (editFacility.headManager) {
+            const existingFacility = facilities.find(f => f.headManager === editFacility.headManager && f.facilityId !== editFacility.facilityId);
             if (existingFacility) {
                 conflict.push(
                     <div key="manager-conflict">
@@ -132,8 +132,8 @@ export default function ManageFacilities() {
 
         // Check if any selected technicians are already assigned elsewhere
         const conflictingTechnicians = technicians.filter(tech =>
-            editFacility.technicians.includes(tech.user_id) &&
-            facilities.some(f => f.technicians.includes(tech.user_id) && f.facility_id !== editFacility.facility_id)
+            editFacility.technicians.includes(tech.userId) &&
+            facilities.some(f => f.technicians.includes(tech.userId) && f.facilityId !== editFacility.facilityId)
         );
 
         if (conflictingTechnicians.length > 0) {
@@ -142,7 +142,7 @@ export default function ManageFacilities() {
                     <strong>The following technicians</strong> are already assigned to another facility:
                     <ul className="list-disc pl-8">
                         {conflictingTechnicians.map(t => (
-                            <li className="" key={t.user_id}>{t.name} - ID: {t.user_id}</li>
+                            <li className="" key={t.userId}>{t.name} - ID: {t.userId}</li>
                         ))}
                     </ul>
                 </div>
@@ -165,15 +165,15 @@ export default function ManageFacilities() {
 
             if (pendingUpdate?.previousFacility) {
                 // If the previous facility had this manager, remove the manager
-                await fetch(`http://localhost:5129/api/facilities/${pendingUpdate.previousFacility.facility_id}`, {
+                await fetch(`http://localhost:5129/api/facilities/${pendingUpdate.previousFacility.facilityId}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
-                    body: JSON.stringify({ head_manager: null }),
+                    body: JSON.stringify({ headManager: null }),
                 });
             }
 
             // Update Facility
-            const res = await fetch(`http://localhost:5129/api/facilities/${editFacility.facility_id}`, {
+            const res = await fetch(`http://localhost:5129/api/facilities/${editFacility.facilityId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
                 body: JSON.stringify(editFacility),
@@ -251,14 +251,14 @@ export default function ManageFacilities() {
     if (error) return <p>Error: {error}</p>;
 
     const managerOptions = managers?.map(manager => ({
-        value: manager.user_id,
-        label: `${manager.name} - ID: ${manager.user_id} - ${facilities?.find(f => f.head_manager === manager.user_id)?.name || 'Unassigned'}`
+        value: manager.userId,
+        label: `${manager.name} - ID: ${manager.userId} - ${facilities?.find(f => f.headManager === manager.userId)?.name || 'Unassigned'}`
     }))
 
     /** Convert Technicians to Select Options */
     const technicianOptions = technicians?.map(tech => ({
-        value: tech.user_id,
-        label: `${tech.name} - ID: ${tech.user_id} - ${facilities?.find(f => f.technicians.includes(tech.user_id))?.name || 'Unassigned'}`
+        value: tech.userId,
+        label: `${tech.name} - ID: ${tech.userId} - ${facilities?.find(f => f.technicians.includes(tech.userId))?.name || 'Unassigned'}`
     }));
 
     // console.log(facilities)
@@ -292,27 +292,27 @@ export default function ManageFacilities() {
                     </thead>
                     <tbody>
                         {facilities.map((facility) => (
-                            <tr key={facility.facility_id} className="border">
-                                <td className="p-2 border text-center">{facility.facility_id}</td>
+                            <tr key={facility.facilityId} className="border">
+                                <td className="p-2 border text-center">{facility.facilityId}</td>
                                 <td className="p-2 border">{facility.name}</td>
                                 <td className="p-2 border relative">
                                     <span
                                         className="cursor-pointer hover:text-white hover:bg-black transition-all rounded-2xl p-2"
                                         onMouseEnter={(e) => {
                                             setHoveredUser({
-                                                name: managers.find(m => m.user_id === facility.head_manager)?.name || "Unnassigned",
-                                                id: facility.head_manager ? facility.head_manager : null
+                                                name: managers.find(m => m.userId === facility.headManager)?.name || "Unnassigned",
+                                                id: facility.headManager ? facility.headManager : null
                                             });
                                             setTooltipPosition({ x: e.clientX, y: e.clientY });
                                         }}
                                         onMouseLeave={() => setHoveredUser(null)}
                                     >
-                                        {managers?.find(m => m.user_id === facility.head_manager)?.name || "Unassigned Manager"}
+                                        {managers?.find(m => m.userId === facility.headManager)?.name || "Unassigned Manager"}
                                     </span>
                                 </td>
                                 <td className="p-2 border">
                                     {facility.technicians?.map(techId => {
-                                        const technician = technicians.find(t => t.user_id === techId);
+                                        const technician = technicians.find(t => t.userId === techId);
                                         return (
                                             <span
                                                 key={techId}
@@ -331,7 +331,7 @@ export default function ManageFacilities() {
                                 <td className="p-2 border">{facility.location}</td>
                                 <td className="p-2 border text-center">
                                     <button className="bg-blue-500 text-white px-3 py-1 rounded mr-2" onClick={() => handleEdit(facility)}>Edit</button>
-                                    <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={() => { setShowDeleteModal(true); setFacilityToDelete(facility.facility_id); }}>Delete</button>
+                                    <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={() => { setShowDeleteModal(true); setFacilityToDelete(facility.facilityId); }}>Delete</button>
                                 </td>
                             </tr>
                         ))}
@@ -379,7 +379,7 @@ export default function ManageFacilities() {
                             <Select
                                 options={managerOptions}
                                 placeholder="Select Manager"
-                                value={managerOptions.find(opt => editFacility.head_manager === opt.value) || null} // Find single selected option
+                                value={managerOptions.find(opt => editFacility.headManager === opt.value) || null} // Find single selected option
                                 className="mb-2"
                                 onChange={(selected) => handleManagerChange(selected)} // Handle selection
                             />
@@ -417,7 +417,7 @@ export default function ManageFacilities() {
                     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
                         <div className="bg-white p-6 rounded shadow-md w-96">
                             <h3 className="text-xl font-semibold text-red-600 mb-4">Delete Facility</h3>
-                            <p className="mb-1">Are you sure you want to delete <strong>{facilities.find(f => f.facility_id === facilityToDelete)?.name}</strong>? This action cannot be undone.</p>
+                            <p className="mb-1">Are you sure you want to delete <strong>{facilities.find(f => f.facilityId === facilityToDelete)?.name}</strong>? This action cannot be undone.</p>
                             <p className="mb-4 text-sm text-red-500"><strong>Head Manager and Technicians</strong> of this Facility will be set to <span className="underline text-gray-400 font-bold">unassigned</span>.</p>
                             <div className="flex justify-end">
                                 <button className="bg-gray-500 text-white px-4 py-2 rounded mr-2" onClick={() => setShowDeleteModal(false)}>

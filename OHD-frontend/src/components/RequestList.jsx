@@ -190,7 +190,7 @@ export default function RequestList({ user, view, currentPage, setCurrentPage })
                         </tr>
                     ) : (
                         requests?.map((req, index) => (
-                            <tr key={req.request_id} className={`border-b ${(req.closing_reason && !req.manager_handle) ? "bg-yellow-200" : ""}`}>
+                            <tr key={req.request_id} className={`border-b ${(req.closingReason && !req.managerHandle) ? "bg-yellow-200" : ""}`}>
                                 <td className="px-4 py-2 text-center">{(currentPage - 1) * 10 + index + 1}</td>
                                 <td className="px-4 py-2">{req.title}</td>
                                 <td className="px-4 py-2 text-center">{facilities.find(facility => facility.facilityId === req.facility)?.name}</td>

@@ -60,13 +60,13 @@ export default function RequestDetail() {
                 const requestData = await response.json();
                 setRequest(requestData);
                 console.log(requestData)
-                setClosingReason(requestData.closing_reason)
+                setClosingReason(requestData.closingReason)
 
                 // Fetch facility, manager, and technicians only if request exists
                 fetchFacilityDetail(requestData.facility, authToken);
 
-                if (requestData.assigned_to) {
-                    fetchAssignedTechnicianDetail(requestData.assigned_to, authToken);
+                if (requestData.assignedTo) {
+                    fetchAssignedTechnicianDetail(requestData.assignedTo, authToken);
                 }
             } catch (err) {
                 setError(err.message);
@@ -137,6 +137,8 @@ export default function RequestDetail() {
 
             if (!technicianResponse.ok) throw new Error("Failed to fetch technician details.");
             const technicianData = await technicianResponse.json();
+            console.log(technicianData);
+            
             setAssignedTechnician(technicianData);
 
         } catch (err) {
@@ -152,7 +154,7 @@ export default function RequestDetail() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
-                body: JSON.stringify({ status: "Work in progress", remarks: "Work is ongoing", update_action: 'start_work' }),
+                body: JSON.stringify({ status: "Work in progress", remarks: "Work is ongoing", updateAction: 'start_work' }),
             });
 
             if (!response.ok) {
@@ -174,7 +176,7 @@ export default function RequestDetail() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
-                body: JSON.stringify({ remarks, update_action: 'update_remarks' }),
+                body: JSON.stringify({ remarks, updateAction: 'update_remarks' }),
             });
 
             if (!response.ok) {
@@ -224,7 +226,7 @@ export default function RequestDetail() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
-                body: JSON.stringify({ status: "Closed", remarks: "Work completed", update_action: 'complete_work' }),
+                body: JSON.stringify({ status: "Closed", remarks: "Work completed", updateAction: 'complete_work' }),
             });
 
             if (!response.ok) {
@@ -247,7 +249,7 @@ export default function RequestDetail() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
-                body: JSON.stringify({ assigned_by: user.user_id, assigned_to: selectedTechnician, status: "Assigned", update_action: 'assign_technician' }),
+                body: JSON.stringify({ assignedBy: user.userId, assignedTo: selectedTechnician, status: "Assigned", remarks: $`Assigned to Technician ${selectedTechnician}`, updateAction: 'assign_technician' }),
             });
 
             if (!response.ok) {
@@ -269,7 +271,7 @@ export default function RequestDetail() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
-                body: JSON.stringify({ status: "Rejected", remarks: `Rejected by Manager ${user.name}, reject reason: ${rejectReason}`, update_action: 'manager_reject' }),
+                body: JSON.stringify({ status: "Rejected", remarks: `Rejected by Manager ${user.name}, reject reason: ${rejectReason}`, updateAction: 'manager_reject' }),
             });
 
             if (!response.ok) {
@@ -289,15 +291,15 @@ export default function RequestDetail() {
 
             if (action === 'approve') {
                 closingUpdate.status = 'Closed';
-                closingUpdate.closing_reason = `Closed by requester, reason: ${closingReason}`
-                closingUpdate.manager_handle = 'approved'
+                closingUpdate.closingReason = `Closed by requester, reason: ${closingReason}`
+                closingUpdate.managerHandle = 'approved'
                 closingUpdate.remarks = `Approved closing request, reason: ${closingReason}`
-                closingUpdate.update_action = 'manager_approve'
+                closingUpdate.updateAction = 'manager_approve'
             } else {
-                closingUpdate.closing_reason = `Closing request declined by manager`
-                closingUpdate.manager_handle = 'declined'
+                closingUpdate.closingReason = `Closing request declined by manager`
+                closingUpdate.managerHandle = 'declined'
                 closingUpdate.remarks = `Declined closing request, reason: ${closingReason}`
-                closingUpdate.update_action = 'manager_decline'
+                closingUpdate.updateAction = 'manager_decline'
             }
 
             const response = await fetch(`http://localhost:5129/api/requests/${request_id}`, {
@@ -332,7 +334,7 @@ export default function RequestDetail() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
-                body: JSON.stringify({ closing_reason: closingReason, update_action: 'submit_closing_reason' }),
+                body: JSON.stringify({ closingReason: closingReason, updateAction: 'submit_closing_reason' }),
             });
 
             if (!response.ok) {
@@ -350,7 +352,7 @@ export default function RequestDetail() {
     if (error) return <p>Error: {error}</p>;
     if (!request) return <p>No request found.</p>;
 
-    const isManagerOfThisFacility = user?.roles.includes("Manager") && user?.user_id === facility?.head_manager;
+    const isManagerOfThisFacility = user?.roles.includes("Manager") && user?.userId === facility?.headManager;
     // console.log('User', user);
     // console.log('Facility', facility);
     // console.log('Manager', manager);
@@ -377,14 +379,14 @@ export default function RequestDetail() {
                 <p><strong>Updated At:</strong> {Date(request.updatedAt).toLocaleString()}</p>
 
                 {/* Closing Request Handling */}
-                {user.user_id === request.created_by && request.status !== 'Rejected' && request.status !== 'Closed' ? (
-                    request.closing_reason ? (
+                {user.userId === request.createdBy && request.status !== 'Rejected' && request.status !== 'Closed' ? (
+                    request.closingReason ? (
                         <div>
                             <h3 className="text-xl font-semibold mt-6">Closing Reason:</h3>
-                            <p className="bg-gray-100 p-3 rounded">{request.closing_reason}</p>
-                            {request.manager_handle === 'approve' ? (
+                            <p className="bg-gray-100 p-3 rounded">{request.closingReason}</p>
+                            {request.managerHandle === 'approve' ? (
                                 <p className="text-green-600 font-semibold">✅ Closing request approved.</p>
-                            ) : request.manager_handle === 'decline' ? (
+                            ) : request.managerHandle === 'decline' ? (
                                 <p className="text-red-600 font-semibold">❌ Closing request declined.</p>
                             ) : (
                                 <p className="text-yellow-600 font-semibold">⌛ Waiting for Facility's Head Manager approval...</p>
@@ -412,7 +414,7 @@ export default function RequestDetail() {
 
 
                 {/* Technician Actions */}
-                {user?.roles.includes("Technician") && user.user_id === request.assigned_to && (
+                {user?.roles.includes("Technician") && user.userId === request.assignedTo && (
                     <div className="mt-4">
                         {request.status === "Assigned" ? (
                             <button onClick={handleStartWork} className="bg-blue-500 text-white px-4 py-2 rounded">
@@ -452,7 +454,7 @@ export default function RequestDetail() {
                                 <select value={selectedTechnician} onChange={(e) => setSelectedTechnician(e.target.value)} className="border p-2 rounded w-full mt-2">
                                     <option value="">Select Technician</option>
                                     {technicians.map((tech) => (
-                                        <option key={tech.user_id} value={tech.user_id}>{tech.name} - ID: {tech.user_id}</option>
+                                        <option key={tech.userId} value={tech.userId}>{tech.name} - ID: {tech.userId}</option>
                                     ))}
                                 </select>
                                 {/* Confirm Assignment Button (Disabled if no technician selected) */}
@@ -476,9 +478,9 @@ export default function RequestDetail() {
                     </div>
                 )}
 
-                {isManagerOfThisFacility && request.closing_reason && !request.manager_handle && (
+                {isManagerOfThisFacility && request.closingReason && !request.managerHandle && (
                     <div>
-                        <h3 className="text-xl font-semibold mt-6 text-red-500"><strong>Closing Reason:</strong> {request.closing_reason}</h3>
+                        <h3 className="text-xl font-semibold mt-6 text-red-500"><strong>Closing Reason:</strong> {request.closingReason}</h3>
                         <button onClick={() => handleClosingReason('approve')} className="px-4 py-2 rounded mt-2 bg-blue-500 text-white" >Approve Closing Reason</button>
                         <button onClick={() => handleClosingReason('decline')} className="px-4 py-2 rounded mt-2 bg-red-500 text-white" >Decline Closing Reason</button>
                     </div>

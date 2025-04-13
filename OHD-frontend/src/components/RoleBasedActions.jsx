@@ -15,8 +15,8 @@ export default function RoleBasedActions({ roles, setView, setCurrentPage }) {
                 if (!response.ok) throw new Error("Failed to fetch closing requests.");
 
                 const data = await response.json();
+                setClosingRequestCount(data.data.length || 0); // Ensure it gets the count
                 
-                setClosingRequestCount(data.requests?.length || 0); // Ensure it gets the count
             } catch (err) {
                 console.error(err.message);
             }
