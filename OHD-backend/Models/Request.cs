@@ -16,7 +16,7 @@ namespace OHD_backend.Models
         public string? Status { get; set; } // Unassigned, Assigned, Work in progress, Closed, Rejected
         public string? Remarks { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
         // Navigational properties (optional, for relationship with users and facilities)
         public User? CreatedByUser { get; set; }

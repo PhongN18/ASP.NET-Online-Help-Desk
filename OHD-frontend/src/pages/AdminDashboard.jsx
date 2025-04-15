@@ -19,6 +19,7 @@ import AdminNavbar from "../components/AdminNavbar";
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend);
 
 export default function AdminDashboard() {
+    const [allData, setAllData] = useState()
     const [overviewStats, setOverviewStats] = useState({});
     const [requestsOverTime, setRequestsOverTime] = useState([]);
     const [requestsByFacility, setRequestsByFacility] = useState([]);
@@ -68,6 +69,7 @@ export default function AdminDashboard() {
                 ]);
 
                 const data = await Promise.all(responses.map(res => res.json()));
+                setAllData(data)
                 setOverviewStats(data[0]);
                 setRequestsOverTime(data[1]);
                 setRequestsByFacility(data[2]);
@@ -87,6 +89,7 @@ export default function AdminDashboard() {
         navigate("/login");
     };
 
+    console.log(allData);
     console.log('1', overviewStats);
     console.log('2', requestsOverTime);
     console.log('3', requestsByFacility);

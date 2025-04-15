@@ -249,7 +249,7 @@ export default function RequestDetail() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
-                body: JSON.stringify({ assignedBy: user.userId, assignedTo: selectedTechnician, status: "Assigned", remarks: $`Assigned to Technician ${selectedTechnician}`, updateAction: 'assign_technician' }),
+                body: JSON.stringify({ assignedBy: user.userId, assignedTo: selectedTechnician, status: "Assigned", remarks: `Assigned to Technician ${selectedTechnician}`, updateAction: 'assign_technician' }),
             });
 
             if (!response.ok) {
@@ -384,9 +384,9 @@ export default function RequestDetail() {
                         <div>
                             <h3 className="text-xl font-semibold mt-6">Closing Reason:</h3>
                             <p className="bg-gray-100 p-3 rounded">{request.closingReason}</p>
-                            {request.managerHandle === 'approve' ? (
+                            {request.managerHandle === 'approved' ? (
                                 <p className="text-green-600 font-semibold">✅ Closing request approved.</p>
-                            ) : request.managerHandle === 'decline' ? (
+                            ) : request.managerHandle === 'declined' ? (
                                 <p className="text-red-600 font-semibold">❌ Closing request declined.</p>
                             ) : (
                                 <p className="text-yellow-600 font-semibold">⌛ Waiting for Facility's Head Manager approval...</p>
