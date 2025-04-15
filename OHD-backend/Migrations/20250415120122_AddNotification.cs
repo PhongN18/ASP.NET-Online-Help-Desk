@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace OHD_backend.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class AddNotification : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -29,6 +29,23 @@ namespace OHD_backend.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Facilities", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<string>(type: "TEXT", nullable: false),
+                    RequestId = table.Column<string>(type: "TEXT", nullable: false),
+                    Message = table.Column<string>(type: "TEXT", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsRead = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -69,7 +86,7 @@ namespace OHD_backend.Migrations
                     Status = table.Column<string>(type: "TEXT", nullable: true, defaultValue: "Unassigned"),
                     Remarks = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedByUserId = table.Column<int>(type: "INTEGER", nullable: true),
                     AssignedToUserId = table.Column<int>(type: "INTEGER", nullable: true),
                     FacilityDetailsId = table.Column<int>(type: "INTEGER", nullable: true)
@@ -113,6 +130,9 @@ namespace OHD_backend.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Notifications");
+
             migrationBuilder.DropTable(
                 name: "Requests");
 

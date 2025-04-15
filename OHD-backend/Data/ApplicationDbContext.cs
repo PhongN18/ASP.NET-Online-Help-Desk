@@ -11,7 +11,7 @@ namespace OHD_backend.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Request> Requests { get; set; }
         public DbSet<Facility> Facilities { get; set; }
-
+        public DbSet<Notification> Notifications { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Default values

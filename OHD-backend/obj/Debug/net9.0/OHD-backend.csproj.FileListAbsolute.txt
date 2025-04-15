@@ -233,3 +233,5 @@ E:\APTECH\3rd SEM Projects\ASP.NET - Online Help Desk\OHD-backend\bin\Debug\net9
 E:\APTECH\3rd SEM Projects\ASP.NET - Online Help Desk\OHD-backend\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 E:\APTECH\3rd SEM Projects\ASP.NET - Online Help Desk\OHD-backend\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 E:\APTECH\3rd SEM Projects\ASP.NET - Online Help Desk\OHD-backend\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
+E:\APTECH\3rd SEM Projects\ASP.NET - Online Help Desk\OHD-backend\bin\Debug\net9.0\Newtonsoft.Json.dll
+E:\APTECH\3rd SEM Projects\ASP.NET - Online Help Desk\OHD-backend\bin\Debug\net9.0\System.Net.WebSockets.WebSocketProtocol.dll

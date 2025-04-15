@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("OHD-backend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cd517a6ac916e9d5241f14a17b80114506b292cd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+06efb561e2bed49de480a5123cfbf6c7f41c4447")]
 [assembly: System.Reflection.AssemblyProductAttribute("OHD-backend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("OHD-backend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -13,7 +13,7 @@ export default function DashboardNavbar({ user }) {
         <nav className="bg-blue-600 text-white p-4 flex justify-between items-center">
             <a className="text-xl font-semibold text-white hover:text-gray-300" href='/dashboard'>User Dashboard</a>
             <div className="flex items-center gap-4">
-                <span className="text-lg">{user.name} ({user.roles[0]}) - ID: {user.userId}</span>
+                <span className="text-lg">{user?.name} ({user?.roles[0]}) - ID: {user?.userId}</span>
                 <Button onClick={handleLogout}>Logout</Button>
             </div>
         </nav>
