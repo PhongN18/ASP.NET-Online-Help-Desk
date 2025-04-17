@@ -20,7 +20,7 @@ namespace OHD_backend.Controllers
             _context = context;
         }
 
-        [HttpPost("Create")]
+        [HttpPost]
         public async Task<IActionResult> CreateFacility([FromBody] CreateFacilityDto dto)
         {
             if (dto == null)
@@ -37,7 +37,7 @@ namespace OHD_backend.Controllers
                 Name = dto.Name,
                 Location = dto.Location ?? "Not specified",
                 Status = "Operating",
-                HeadManager = dto.HeadManager,
+                HeadManager = dto.HeadManager ?? "Unassigned",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -82,9 +82,17 @@ namespace OHD_backend.Controllers
                 return NotFound(new { message = "Facility not found" });
             }
 
-            facility.Name = dto.Name;
-            facility.Status = dto.Status;
-            facility.Location = dto.Location;
+            // Allow name/location to remain unchanged if not provided
+            if (dto.Name != null) facility.Name = dto.Name;
+            if (dto.Location != null) facility.Location = dto.Location;
+
+            if (dto.ShouldUpdateHeadManager)
+                facility.HeadManager = dto.HeadManager;
+
+            if (dto.ShouldUpdateTechnicians)
+                facility.Technicians = dto.Technicians ?? new List<string>();
+
+            facility.UpdatedAt = DateTime.UtcNow;
 
             _context.Facilities.Update(facility);
             await _context.SaveChangesAsync();

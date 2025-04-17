@@ -41,6 +41,7 @@ public class NotificationController : ControllerBase
         return Ok(new
         {
             count = notifications.Count,
+            unreadCount = notifications.Count(n => !n.IsRead),
             notifications = notifications
         });
     }

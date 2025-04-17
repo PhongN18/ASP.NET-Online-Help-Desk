@@ -155,7 +155,7 @@ export default function ManageUsers() {
                 formatRoles = ['Technician', 'Requester']
             }
             
-            const res = await fetch(`http://localhost:5129/api/users/${editUser.user_id}`, {
+            const res = await fetch(`http://localhost:5129/api/users/${editUser.userId}`, {
                 method: 'PUT',
                 headers: { 
                     "Content-Type": "application/json",
@@ -176,7 +176,7 @@ export default function ManageUsers() {
             
             setUsers(prevUsers => 
                 prevUsers.map(user => 
-                    user.user_id === editUser.user_id ? editUser : user
+                    user.userId === editUser.userId ? editUser : user
                 )
             );
             
@@ -200,25 +200,45 @@ export default function ManageUsers() {
     const handleEditRoleChange = (role) => {
         setEditUser(prev => {
             let updatedRoles = [...prev.roles];
-    
+        
             if (role === 'Admin') {
-                // If 'Admin' is selected, deselect all other roles
+                // If 'Admin' is selected, set only Admin
                 updatedRoles = ['Admin'];
             } else {
-                // If another role is selected, ensure 'Admin' is deselected
+                // Deselect Admin if other roles are selected
                 if (updatedRoles.includes('Admin')) {
                     updatedRoles = updatedRoles.filter(r => r !== 'Admin');
                 }
-    
+        
                 // Toggle the selected role
                 updatedRoles = updatedRoles.includes(role)
-                    ? updatedRoles.filter(r => r !== role)  // Remove the role
-                    : [...updatedRoles, role];  // Add the role
+                    ? updatedRoles.filter(r => r !== role)  // Remove role
+                    : [...updatedRoles, role];              // Add role
             }
-    
+        
+            // If Admin is selected, return immediately
+            if (updatedRoles.includes('Admin')) {
+                return {
+                    ...prev,
+                    roles: ['Admin']
+                };
+            }
+        
+            // Apply role hierarchy otherwise
+            let formattedRoles = ['Requester'];
+            if (updatedRoles.includes('Manager')) {
+                formattedRoles = ['Manager', 'Technician', 'Requester'];
+            } else if (updatedRoles.includes('Technician')) {
+                formattedRoles = ['Technician', 'Requester'];
+            } else if (updatedRoles.includes('Requester')) {
+                formattedRoles = ['Requester'];
+            } else {
+                formattedRoles = [];
+            }
+        
             return {
                 ...prev,
-                roles: updatedRoles
+                roles: formattedRoles
             };
         });
     };
@@ -245,7 +265,7 @@ export default function ManageUsers() {
                 throw new Error(errorData.message || "Failed to delete user");
             }
             
-            setUsers(prevUsers => prevUsers.filter(user => user.user_id !== userToDelete));
+            setUsers(prevUsers => prevUsers.filter(user => user.userId !== userToDelete));
             setShowDeleteModal(false);
             setError(""); // Clear any previous errors
         } catch (err) {
@@ -258,6 +278,8 @@ export default function ManageUsers() {
         navigate("/login");
     };
 
+    console.log(users);
+    
     return (
         <>
             <AdminNavbar onLogout={handleLogout} />
@@ -302,7 +324,7 @@ export default function ManageUsers() {
                         >
                             <option value="">All</option>
                             {facilities?.map(facility => (
-                                <option key={facility.facility_id} value={facility.facility_id}>{facility.name}</option>
+                                <option key={facility.facilityId} value={facility.facilityId}>{facility.name}</option>
                             ))}
                         </select>
                     </div>
@@ -394,15 +416,15 @@ export default function ManageUsers() {
                             </tr>
                         ) : (
                             users.map((user) => (
-                                <tr key={user.user_id} className="border">
-                                    <td className="p-2 border text-center">{user.user_id}</td>
+                                <tr key={user.userId} className="border">
+                                    <td className="p-2 border text-center">{user.userId}</td>
                                     <td className="p-2 border">{user.name}</td>
                                     <td className="p-2 border">{user.email}</td>
                                     <td className="p-2 border text-center">{user.roles[0]}</td>
                                     {user.roles[0] === 'Manager' ? (
-                                        <td className="p-2 border text-center">{facilities?.find(f => f.head_manager === user.user_id).name}</td>
+                                        <td className="p-2 border text-center">{facilities?.find(f => f.headManager === user.userId)?.name}</td>
                                     ) : (user.roles[0] === 'Technician' ? (
-                                        <td className="p-2 border text-center">{facilities?.find(f => f.technicians.includes(user.user_id)).name}</td>
+                                        <td className="p-2 border text-center">{facilities?.find(f => f.technicians.includes(user.userId))?.name}</td>
                                     ) : (
                                         <td className="p-2 border text-center"></td>
                                     ))}
@@ -418,7 +440,7 @@ export default function ManageUsers() {
                                             className="bg-red-500 text-white px-3 py-1 rounded"
                                             onClick={() => {
                                                 setShowDeleteModal(true);
-                                                setUserToDelete(user.user_id);
+                                                setUserToDelete(user.userId);
                                             }}
                                         >
                                             Delete

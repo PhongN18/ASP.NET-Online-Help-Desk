@@ -59,18 +59,63 @@ namespace OHD_backend.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetUsers([FromQuery] string role = null, [FromQuery] string status = null)
+        public async Task<IActionResult> GetUsers([FromQuery] string? roles, [FromQuery] string? status, [FromQuery] string? facility, [FromQuery] int? page, [FromQuery] int? limit)
         {
-            var filter = _context.Users.AsQueryable();
+            try
+            {
+                var users = await _context.Users.ToListAsync();
 
-            if (!string.IsNullOrEmpty(role))
-                filter = filter.Where(u => u.Roles.Contains(role));
+                // Filter by roles
+                if (!string.IsNullOrEmpty(roles))
+                {
+                    var rolesArray = roles.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    users = users.Where(u => u.Roles.Count > 0 && rolesArray.Contains(u.Roles[0])).ToList();
+                }
 
-            if (!string.IsNullOrEmpty(status))
-                filter = filter.Where(u => u.Status == status);
+                // Filter by status
+                if (!string.IsNullOrEmpty(status))
+                {
+                    users = users.Where(u => u.Status == status).ToList();
+                }
 
-            var users = await filter.ToListAsync();
-            return Ok(users);
+                // Filter by facility
+                if (!string.IsNullOrEmpty(facility))
+                {
+                    var facilityEntity = await _context.Facilities.FirstOrDefaultAsync(f => f.FacilityId == facility);
+                    if (facilityEntity == null)
+                        return NotFound(new { message = "Facility not found" });
+
+                    var facilityUserIds = new List<string>(facilityEntity.Technicians ?? new List<string>());
+                    if (!string.IsNullOrEmpty(facilityEntity.HeadManager) && facilityEntity.HeadManager != "Unassigned")
+                        facilityUserIds.Add(facilityEntity.HeadManager);
+
+                    users = users.Where(u => facilityUserIds.Contains(u.UserId)).ToList();
+                }
+
+                var totalItems = users.Count;
+
+                if (page.HasValue && limit.HasValue && page > 0 && limit > 0)
+                {
+                    var pagedUsers = users
+                        .Skip((page.Value - 1) * limit.Value)
+                        .Take(limit.Value)
+                        .ToList();
+
+                    return Ok(new
+                    {
+                        totalItems,
+                        totalPages = (int)Math.Ceiling((double)totalItems / limit.Value),
+                        currentPage = page.Value,
+                        data = pagedUsers
+                    });
+                }
+
+                return Ok(new { data = users });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error", error = ex.Message });
+            }
         }
 
         [HttpGet("{userId}")]

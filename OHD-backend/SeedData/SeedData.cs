@@ -177,6 +177,8 @@ namespace OHD_backend.SeedData
 
             var start = new DateTime(2024, 8, 1);
             var end = new DateTime(2025, 4, 15);
+            var totalDurationTicks = (end - start).Ticks;
+            var intervalTicks = totalDurationTicks / 500;
 
             for (int i = 0; i < 500; i++)
             {
@@ -189,19 +191,22 @@ namespace OHD_backend.SeedData
 
                 string? assignedTo = null;
                 string? assignedBy = null;
-                var createdAt = start.AddDays(Random.Shared.Next((end - start).Days));
+                var slotStart = start.Ticks + (i * intervalTicks);
+                var slotEnd = slotStart + intervalTicks;
+                var randomTicks = slotStart + (long)(Random.Shared.NextDouble() * (slotEnd - slotStart));
+                var createdAt = new DateTime(randomTicks);
                 var updatedAt = createdAt;
 
                 if (status == "Work in progress" || status == "Closed" || status == "Assigned")
                 {
                     assignedTo = (status != "Unassigned" && status != "Rejected") ? $"U{Random.Shared.Next(facilityRandom * 5 + 2, facilityRandom * 5 + 6).ToString().PadLeft(6, '0')}" : null;
                     assignedBy = (assignedTo != null) ? $"U{(facilityRandom + 1).ToString().PadLeft(6, '0')}" : null;
-                    updatedAt = createdAt.AddDays(Random.Shared.Next(1, 10));
+                    updatedAt = createdAt.AddMinutes(Random.Shared.Next(10, 600));
                 }
 
                 if (status == "Rejected")
                 {
-                    updatedAt = createdAt.AddDays(Random.Shared.Next(1, 10));
+                    updatedAt = createdAt.AddMinutes(Random.Shared.Next(10, 600));
                 }
 
                 var request = new Request

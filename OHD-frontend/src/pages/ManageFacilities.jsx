@@ -17,6 +17,7 @@ export default function ManageFacilities() {
     const [newFacility, setNewFacility] = useState({ name: '', location: '' });
     const [hoveredUser, setHoveredUser] = useState(null);
     const [conflictMessage, setConflictMessage] = useState("");
+    const [technicianConflicts, setTechnicianConflicts] = useState({});
     const [pendingUpdate, setPendingUpdate] = useState(null);
     const [showConfirmationModal, setShowConfirmationModal] = useState(false)
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -69,13 +70,13 @@ export default function ManageFacilities() {
     /** Fetch all managers (users with "Manager" role) */
     const fetchManagers = async (authToken) => {
         try {
-            const res = await fetch("http://localhost:5129/api/users?roles=Manager", {
+            const res = await fetch("http://localhost:5129/api/users?role=Manager", {
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
             });
 
             if (!res.ok) throw new Error("Failed to fetch managers.");
             const data = await res.json();
-            setManagers(data.data);
+            setManagers(data);
         } catch (err) {
             console.error("Error fetching managers:", err);
         }
@@ -84,13 +85,13 @@ export default function ManageFacilities() {
     /** Fetch all technicians (users with "Technician" role) */
     const fetchTechnicians = async (authToken) => {
         try {
-            const res = await fetch("http://localhost:5129/api/users?roles=Technician", {
+            const res = await fetch("http://localhost:5129/api/users?role=Technician", {
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
             });
 
             if (!res.ok) throw new Error("Failed to fetch technicians.");
             const data = await res.json();
-            setTechnicians(data.data);
+            setTechnicians(data);
         } catch (err) {
             console.error("Error fetching technicians:", err);
         }
@@ -100,22 +101,24 @@ export default function ManageFacilities() {
         setEditFacility(prev => ({
             ...prev,
             headManager: selected ? selected.value : "", // Set manager as single value
+            shouldUpdateHeadManager: true
         }));
     };
 
     const handleTechnicianChange = (selectedTechnicians) => {
         const techIds = selectedTechnicians.map((tech) => tech.value);
-        setEditFacility({ ...editFacility, technicians: techIds });
+        setEditFacility({ ...editFacility, technicians: techIds, shouldUpdateTechnicians: true });
     };
 
     const handleEdit = (facility) => {
-        setEditFacility({ ...facility });
+        setEditFacility({ ...facility, shouldUpdateHeadManager: false, shouldUpdateTechnicians: false });
         setShowEditModal(true)
     };
 
     const checkForConflicts = () => {
         let conflict = [];
         let previousFacility = null;
+        const conflictMap = {}; // Temporary dict to track conflicting techs by facility
 
         // Check if selected manager is already managing another facility
         if (editFacility.headManager) {
@@ -133,7 +136,7 @@ export default function ManageFacilities() {
         // Check if any selected technicians are already assigned elsewhere
         const conflictingTechnicians = technicians.filter(tech =>
             editFacility.technicians.includes(tech.userId) &&
-            facilities.some(f => f.technicians.includes(tech.userId) && f.facilityId !== editFacility.facilityId)
+            facilities.some(f => f.technicians?.includes(tech.userId) && f.facilityId !== editFacility.facilityId)
         );
 
         if (conflictingTechnicians.length > 0) {
@@ -141,19 +144,29 @@ export default function ManageFacilities() {
                 <div key="technician-conflict">
                     <strong>The following technicians</strong> are already assigned to another facility:
                     <ul className="list-disc pl-8">
-                        {conflictingTechnicians.map(t => (
-                            <li className="" key={t.userId}>{t.name} - ID: {t.userId}</li>
-                        ))}
+                        {conflictingTechnicians.map(t => {
+                            const facility = facilities.find(f => f.technicians?.includes(t.userId) && f.facilityId !== editFacility.facilityId);
+                            if (facility) {
+                                if (!conflictMap[facility.facilityId]) conflictMap[facility.facilityId] = [];
+                                conflictMap[facility.facilityId].push(t.userId);
+                            }
+                            return <li key={t.userId}>{t.name} - ID: {t.userId}</li>;
+                        })}
                     </ul>
                 </div>
             )
         }
 
-        if (conflict) {
+        if (conflict.length > 0) {
             conflict.push(<p key="msg" className="my-4">Changing this will remove them from their previous facility.</p>)
             setConflictMessage(conflict);
+            if (previousFacility) {
+                setPendingUpdate({ previousFacility });
+            } else {
+                setPendingUpdate(null); // reset to avoid carrying over old state
+            }
+            setTechnicianConflicts(conflictMap); // ✅ Save the mapping
             setShowConfirmationModal(true);
-            setPendingUpdate({ previousFacility });
         } else {
             handleUpdateFacility();
         }
@@ -165,13 +178,29 @@ export default function ManageFacilities() {
 
             if (pendingUpdate?.previousFacility) {
                 // If the previous facility had this manager, remove the manager
+                console.log(pendingUpdate.previousFacility);
+                
                 await fetch(`http://localhost:5129/api/facilities/${pendingUpdate.previousFacility.facilityId}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
-                    body: JSON.stringify({ headManager: null }),
+                    body: JSON.stringify({ headManager: null, shouldUpdateHeadManager: true }),
                 });
             }
 
+            // Remove conflicting technicians from their previous facilities
+            for (const [facilityId, techIds] of Object.entries(technicianConflicts)) {
+                const targetFacility = facilities.find(f => f.facilityId === facilityId);
+                const updatedTechnicians = targetFacility.technicians.filter(tid => !techIds.includes(tid));
+                
+                await fetch(`http://localhost:5129/api/facilities/${facilityId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+                    body: JSON.stringify({ technicians: updatedTechnicians, shouldUpdateTechnicians: true }),
+                });
+            }
+            
+            console.log(editFacility);
+            
             // Update Facility
             const res = await fetch(`http://localhost:5129/api/facilities/${editFacility.facilityId}`, {
                 method: "PUT",
@@ -181,6 +210,8 @@ export default function ManageFacilities() {
 
             if (!res.ok) throw new Error("Failed to update facility.");
             alert("Facility updated successfully.");
+            setPendingUpdate(null);
+            setTechnicianConflicts({});
             setEditFacility(null);
             setShowEditModal(false);
             setShowConfirmationModal(false);
@@ -258,9 +289,9 @@ export default function ManageFacilities() {
     /** Convert Technicians to Select Options */
     const technicianOptions = technicians?.map(tech => ({
         value: tech.userId,
-        label: `${tech.name} - ID: ${tech.userId} - ${facilities?.find(f => f.technicians.includes(tech.userId))?.name || 'Unassigned'}`
+        label: `${tech.name} - ID: ${tech.userId} - ${facilities?.find(f => f.technicians?.includes(tech.userId))?.name || 'Unassigned'}`
     }));
-
+    
     // console.log(facilities)
     // console.log(technicians)
 
@@ -307,12 +338,12 @@ export default function ManageFacilities() {
                                         }}
                                         onMouseLeave={() => setHoveredUser(null)}
                                     >
-                                        {managers?.find(m => m.userId === facility.headManager)?.name || "Unassigned Manager"}
+                                        {managers?.find(m => m.userId === facility.headManager)?.name || "Unassigned"}
                                     </span>
                                 </td>
                                 <td className="p-2 border">
                                     {facility.technicians?.map(techId => {
-                                        const technician = technicians.find(t => t.userId === techId);
+                                        const technician = technicians?.find(t => t.userId === techId);
                                         return (
                                             <span
                                                 key={techId}
@@ -388,7 +419,7 @@ export default function ManageFacilities() {
                                 options={technicianOptions}
                                 isMulti
                                 placeholder="Select Technicians"
-                                value={technicianOptions.filter(opt => editFacility.technicians.includes(opt.value))}
+                                value={technicianOptions.filter(opt => editFacility.technicians?.includes(opt.value))}
                                 className="mb-2"
                                 onChange={(selected) => handleTechnicianChange(selected, true)}
                             />

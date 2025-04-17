@@ -5,7 +5,8 @@ import { useNavigate } from "react-router-dom";
 export default function UserNotifications() {
     const [user, setUser] = useState(null);
     const [notifications, setNotifications] = useState([]);
-    const [notiCount, setNotiCount] = useState(0)
+    const [notiCount, setNotiCount] = useState(0);
+    const [unreadNotiCount, setUnreadNotiCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -42,6 +43,7 @@ export default function UserNotifications() {
                 
                 setNotifications(notiData.notifications);
                 setNotiCount(notiData.count)
+                setUnreadNotiCount(notiData.unreadCount)
     
             } catch (err) {
                 console.error("Error fetching user or notifications:", err);
@@ -69,6 +71,7 @@ export default function UserNotifications() {
         });
         setNotifications([]);
         setNotiCount(0)
+        setUnreadNotiCount(0)
     };
 
     const markAsRead = async (notifId) => {
@@ -86,6 +89,7 @@ export default function UserNotifications() {
                 setNotifications(prev =>
                     prev.map(n => n.id === notifId ? { ...n, isRead: true } : n)
                 );
+                setUnreadNotiCount(prev => prev - 1)
             }
         } catch (err) {
             console.error("Failed to mark notification as read:", err);
@@ -113,6 +117,7 @@ export default function UserNotifications() {
             setNotifications(prev =>
                 prev.map(n => ({ ...n, isRead: true }))
             );
+            setUnreadNotiCount(0)
     
             console.log(`${data.updatedCount} notifications marked as read.`);
         } catch (err) {
@@ -131,8 +136,18 @@ export default function UserNotifications() {
             });
 
             if (res.ok) {
-                setNotifications(prev => prev.filter(n => n.id !== notifId));
-                setNotiCount(prev => prev - 1)
+                setNotifications(prev => {
+                    const deletedNotif = prev.find(n => n.id === notifId);
+                    const wasRead = deletedNotif?.isRead;
+    
+                    // Update count states
+                    setNotiCount(prev => prev - 1);
+                    if (!wasRead) {
+                        setUnreadNotiCount(prev => prev - 1);
+                    }
+    
+                    return prev.filter(n => n.id !== notifId);
+                });
             }
         } catch (err) {
             console.error("Failed to delete notification:", err);
@@ -148,7 +163,8 @@ export default function UserNotifications() {
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-semibold">Your Notifications ({notiCount})</h2>
                     {notifications.length > 0 && (
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 align-middle">
+                        {unreadNotiCount > 0 && (<div className="leading-10">{unreadNotiCount} notification(s) unread.</div>)}
                         <button
                             onClick={() => markAllAsRead(user.userId)}
                             className="bg-white border-black border-1 px-4 py-2 rounded hover:border-black hover:opacity-75"

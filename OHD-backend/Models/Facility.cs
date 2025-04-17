@@ -6,6 +6,7 @@ namespace OHD_backend.Models
         public string? FacilityId { get; set; } // Unique ID for the facility
         public string? Name { get; set; }
         public string? HeadManager { get; set; }
+        public bool? ShouldUpdateHeadManager { get; set; }
         public string? Status { get; set; } // Operating, Under Maintenance, etc.
         public string? Location { get; set; }
 
@@ -15,5 +16,6 @@ namespace OHD_backend.Models
 
         // Relationship with technicians (one-to-many or many-to-many)
         public List<string>? Technicians { get; set; }
+        public bool? ShouldUpdateTechnicians { get; set; }
     }
 }
